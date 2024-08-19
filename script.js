@@ -1,3 +1,4 @@
+
 const temp = document.getElementById("temp"),
   date = document.getElementById("date-time"),
   currentLocation = document.getElementById("location"),
@@ -29,21 +30,6 @@ let currentUnit = "c";
 let hourlyorWeek = "Week";
 let currentTimezone = "";
 
-function changeBodyColor() {
-  let now = new Date();
-  let hour = now.getHours();
-  if (hour >= 6 && hour < 18) {
-    // Morning (6 AM to 6 PM)
-    document.body.classList.add("light");
-    document.body.classList.remove("dark");
-  } else {
-    // Night (6 PM to 6 AM)
-    document.body.classList.add("dark");
-    document.body.classList.remove("light");
-  }
-}
-changeBodyColor(); // Initial call to set the correct theme
-setInterval(changeBodyColor, 60000); // Check every minute
 
 // Function for updating date and time
 function getDateTime() {
@@ -112,7 +98,7 @@ function getWeatherData(city, unit, hourlyorweek) {
     .then((response) => response.json())
     .then((data) => {
       let today = data.currentConditions;
-      console.log(today); // Log the data for debugging
+      console.log(today); 
       if (unit === "c") {
         temp.innerText = today.temp;
       } else {
@@ -120,7 +106,6 @@ function getWeatherData(city, unit, hourlyorweek) {
       }
       currentLocation.innerText = data.resolvedAddress;
       condition.innerText = today.conditions;
-      rain.innerText = "Perc -" + today.precip + "%";
       uvIndex.innerText = today.uvindex;
       windSpeed.innerText = today.windspeed;
       humidity.innerText = today.humidity + "%";
@@ -134,10 +119,17 @@ function getWeatherData(city, unit, hourlyorweek) {
       sunSet.innerText = convertTimeTo12HourFormat(today.sunset); // Corrected sunSet instead of sunRise
       mainIcon.src = getIcon(today.icon);
       changeBackground(today.icon);
+      if (hourlyorweek === "hourly") {
+        rain.innerText = "Perc -" + data.days[0].precip + "%";
+      } else {
+        // Show daily precipitation
+        rain.innerText = "Perc -" + data.days[0].precip + "%";
+      }
       if (hourlyorWeek === "hourly") {
         updateForecast(data.days[0].hours, unit, "day");
       } else {
-        updateForecast(data.days, unit, "week"); // Corrected from data.days[0].hours to data.days
+        updateForecast(data.days, unit, "week");
+         
       }
       getTimeZone(data.latitude, data.longitude); // Get time zone information
     })
@@ -165,7 +157,21 @@ function measureUvIndex(uvIndex) {
     alert("Warning: Extreme UV levels detected! Take precautions.");
   }
 }
-
+function changeBodyColor() {
+  let now = new Date();
+  let hour = now.getHours();
+  if (hour >= 6 && hour < 18) {
+    // Morning (6 AM to 6 PM)
+    document.body.classList.add("light");
+    document.body.classList.remove("dark");
+  } else {
+    // Night (6 PM to 6 AM)
+    document.body.classList.add("dark");
+    document.body.classList.remove("light");
+  }
+}
+changeBodyColor(); // Initial call to set the correct theme
+setInterval(changeBodyColor, 60000); // Check every minute
 // Function to update humidity
 function updateHumidityStatus(humidityValue) {
   console.log("Humidity Value:", humidityValue); // Log the humidity value for debugging
@@ -228,7 +234,10 @@ function getIcon(condition) {
     return "icons/sun/26.png";
   } else if (condition === "clear-night") {
     return "icons/moon/10.png";
-  } else {
+  } else if (condition === "cloudy"){
+    return "images/cloudy.png";
+  }
+  else {
     return "icons/sun/27.png";
   }
 }
@@ -321,7 +330,7 @@ function changeUnit(unit) {
       celciusBtn.classList.remove("active");
       fahrenheitBtn.classList.add("active");
     }
-    //now calling weather data after change of unit
+    // calling weather data after change of unit
     getWeatherData(currentCity, currentUnit, hourlyorWeek);
   }
 }
@@ -348,25 +357,32 @@ function changeUnit(unit) {
   }
  }
 
- function changeBackground(condition){
-  const body = document.querySelector("body");
-  let bg='';
-  if (condition === "partly-cloudy-day") {
-    bg="images/pc.jpg";
-  } else if (condition === "partly-cloudy-night") {
-    bg= "images/nightsky.png";
-  } else if (condition === "rain") {
-    bg= "icons/rain/39.png";
-  } else if (condition === "clear-day") {
-    bg= "images/blue sky.avif";
-  } else if (condition === "clear-night") {
-    bg= "images/cn.jpg";
-  } else {
-    bg= "images/pc.jpg";
-  }
-  body.style.backgroundImage = `linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)) ,url(${bg})`;
+ function changeBackground(condition) {
+  const videos = document.querySelectorAll('.bg-video');
+  videos.forEach(video => video.style.display = 'none');
 
- }
+  let videoToShow = '';
+
+  if (condition === 'partly-cloudy-day') {
+    videoToShow = 'video-partly-cloudy-day';
+  } else if (condition === 'partly-cloudy-night') {
+    videoToShow = 'video-partly-cloudy-night';
+  } else if (condition === 'rain') {
+    videoToShow = 'video-rain';
+  } else if (condition === 'clear-day') {
+    videoToShow = 'video-clear-day';
+  } else if (condition === 'clear-night') {
+    videoToShow = 'video-clear-night';
+  } else {
+    videoToShow = 'video-partly-cloudy-day'; // Default video
+  }
+
+  // Show the selected video
+  const selectedVideo = document.getElementById(videoToShow);
+  if (selectedVideo) {
+    selectedVideo.style.display = 'block';
+  }
+}
 
  searchForm.addEventListener("submit" , (e) => {
   e.preventDefault();
@@ -383,7 +399,7 @@ function getTimeZone(lat, lon) {
   fetch(`https://api.timezonedb.com/v2.1/get-time-zone?key=${timezoneApiKey}&format=json&by=position&lat=${lat}&lng=${lon}`)
     .then((response) => response.json())
     .then((data) => {
-      console.log(data); // Log time zone data for debugging
+      console.log(data); 
       currentTimezone = data.zoneName;
     })
     .catch((error) => {
