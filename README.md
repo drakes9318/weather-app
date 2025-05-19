@@ -1,2 +1,2 @@
-# weather-app
+# Forecast Now
 This is a weather app
